@@ -52,7 +52,9 @@ class Vocab:
             list of nearest prompts.
         """
         scores, ids = self.index.search(embedding, k)
-        output = itemgetter(*ids.tolist()[0])(self.dataset["text"])
+        output = []
+        for i in range(ids.shape[0]):
+            output.append(itemgetter(*ids.tolist()[i])(self.dataset["text"]))
         return output
 
     def save_pretrained(self, filename: str) -> None:

@@ -72,10 +72,7 @@ class CLIPInterrogator:
         medium = to_list(self.vocab.mediums(image_features, 1))
         artist = to_list(self.vocab.artists(image_features, 1))
         movement = to_list(self.vocab.movements(image_features, 1))
-        flaves = self.vocab.flavors(image_features, max_flavors)
-        if not all(isinstance(i, list) for i in flaves):
-            flaves = [flaves]
-        # flaves = ", ".join(self.vocab.flavors(image_features, max_flavors))
+        flaves = to_list(self.vocab.flavors(image_features, max_flavors))
 
         output = []
         for i in range(len(caption)):
@@ -85,7 +82,7 @@ class CLIPInterrogator:
                 prompt = f"{caption[i]}, {medium[i]} {artist[i]}, {movement[i]}, {', '.join(flaves[i])}"
             output.append(prompt)
 
-        return prompt
+        return output
 
     def _build_vocabulary(self, batch_size: int = 64) -> addict:
         """ Build prompt vocabulary.
@@ -98,7 +95,7 @@ class CLIPInterrogator:
         vocab = {}
         for name in ["artists", "flavors", "mediums", "movements", "sites"]:
             vocab[name] = Vocab.from_corpus(
-                os.path.join(res_path("data"), f"{name}.txt"),
+                os.path.join("data", f"{name}.txt"),
                 self.clip,
                 self.clip_processor,
                 batch_size,
