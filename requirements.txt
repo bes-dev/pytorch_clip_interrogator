@@ -1,0 +1,10 @@
+datasets
+torch
+numpy
+transformers
+tokenizers
+accelerate
+addict==2.4.0
+tqdm==4.64.1
+faiss-cpu==1.7.3
+Pillow
