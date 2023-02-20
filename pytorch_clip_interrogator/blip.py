@@ -14,7 +14,10 @@ from typing import Union, List, Optional, Dict
 import torch
 # BLIP Model
 from transformers import BlipProcessor, BlipForConditionalGeneration
-from transformers import Blip2Processor, Blip2ForConditionalGeneration
+try:
+    from transformers import Blip2Processor, Blip2ForConditionalGeneration
+except:
+    print("BLIP2 model is not available. \nPlease, try to install latest version of transformers library.")
 # utils
 import PIL
 from PIL import Image
