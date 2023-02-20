@@ -20,7 +20,8 @@ requirements = [
     'wheel',
     'torch',
     'numpy',
-    'git+https://github.com/huggingface/transformers.git',
+    # 'git+https://github.com/huggingface/transformers.git',
+    'transformers @ git+https://github.com/huggingface/transformers.git#egg=transformers',
     'tokenizers',
     'accelerate',
     'datasets',
@@ -51,7 +52,6 @@ setup(
     classifiers=[
         'Programming Language :: Python :: 3',
     ],
-
 
     # install .json configs
     package_data={
