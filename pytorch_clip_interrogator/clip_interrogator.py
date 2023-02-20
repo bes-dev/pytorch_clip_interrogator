@@ -95,7 +95,7 @@ class CLIPInterrogator:
         vocab = {}
         for name in ["artists", "flavors", "mediums", "movements", "sites"]:
             vocab[name] = Vocab.from_corpus(
-                os.path.join("data", f"{name}.txt"),
+                os.path.join(res_path("data"), f"{name}.txt"),
                 self.clip,
                 self.clip_processor,
                 batch_size,
