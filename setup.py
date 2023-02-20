@@ -20,7 +20,7 @@ requirements = [
     'wheel',
     'torch',
     'numpy',
-    'transformers',
+    'git+https://github.com/huggingface/transformers.git',
     'tokenizers',
     'accelerate',
     'datasets',

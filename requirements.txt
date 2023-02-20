@@ -1,7 +1,7 @@
 datasets
 torch
 numpy
-transformers
+git+https://github.com/huggingface/transformers.git
 tokenizers
 accelerate
 addict==2.4.0
