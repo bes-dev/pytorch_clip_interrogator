@@ -13,10 +13,6 @@ limitations under the License.
 import os
 from typing import List, Optional, Dict
 import torch
-# CLIP Model
-from transformers import CLIPProcessor, CLIPModel
-# utils
-from addict import Dict as addict
 
 
 def to_list(var):
@@ -106,28 +102,3 @@ def load_prompts(path: str, patterns: Optional[List[str]] = None) -> List[str]:
         for pattern in patterns:
             prompts.extend(improve_prompts(items, pattern))
     return prompts
-
-
-def preprocess_vocabulary(
-        clip: CLIPModel,
-        clip_processor: CLIPProcessor,
-        batch_size: int = 64,
-        device: str = "cpu"
-) -> addict:
-    """ Build prompt vocabulary.
-
-        Args:
-            batch_size (int): batch size.
-        Returns:
-            addict vocabulary.
-        """
-    vocab = {}
-    for name in ["artists", "flavors", "mediums", "movements", "sites"]:
-        vocab[name] = Vocab.from_corpus(
-            os.path.join(res_path("data"), f"{name}.txt"),
-            clip,
-            clip_processor,
-            batch_size,
-            device
-        )
-    return addict(vocab)

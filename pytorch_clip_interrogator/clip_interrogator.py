@@ -25,6 +25,31 @@ from addict import Dict as addict
 from .utils import *
 
 
+def preprocess_vocabulary(
+        clip: CLIPModel,
+        clip_processor: CLIPProcessor,
+        batch_size: int = 64,
+        device: str = "cpu"
+) -> addict:
+    """ Build prompt vocabulary.
+
+        Args:
+            batch_size (int): batch size.
+        Returns:
+            addict vocabulary.
+        """
+    vocab = {}
+    for name in ["artists", "flavors", "mediums", "movements", "sites"]:
+        vocab[name] = Vocab.from_corpus(
+            os.path.join(res_path("data"), f"{name}.txt"),
+            clip,
+            clip_processor,
+            batch_size,
+            device
+        )
+    return addict(vocab)
+
+
 class CLIPInterrogator:
     """ CLIP Interrogator
 
