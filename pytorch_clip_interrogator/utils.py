@@ -15,6 +15,8 @@ from typing import List, Optional, Dict
 import torch
 # CLIP Model
 from transformers import CLIPProcessor, CLIPModel
+# utils
+from addict import Dict as addict
 
 
 def to_list(var):
