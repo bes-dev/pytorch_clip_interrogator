@@ -13,6 +13,8 @@ limitations under the License.
 import os
 from typing import List, Optional, Dict
 import torch
+# CLIP Model
+from transformers import CLIPProcessor, CLIPModel
 
 
 def to_list(var):
