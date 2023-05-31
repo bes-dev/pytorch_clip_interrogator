@@ -62,8 +62,14 @@ class CLIPInterrogator:
             self,
             clip: CLIPModel,
             clip_processor: CLIPProcessor,
-            vocab: Vocab
+            vocab: Vocab,
+            device: str = "cpu",
+            torch_dtype: torch.dtype = torch.float32
     ):
+        # params
+        self.device = device
+        self.torch_dtype = torch_dtype
+        # models
         self.clip = clip
         self.clip_processor = clip_processor
         self.vocab = vocab
@@ -155,7 +161,7 @@ class CLIPInterrogator:
         clip_processor = CLIPProcessor.from_pretrained(os.path.join(path, "clip_processor"))
         clip = CLIPModel.from_pretrained(os.path.join(path, "clip"), torch_dtype=torch_dtype).to(device)
         clip.eval()
-        return cls(clip, clip_processor, vocab)
+        return cls(clip, clip_processor, vocab, device, torch_dtype)
 
     @classmethod
     def load_model(
@@ -174,4 +180,4 @@ class CLIPInterrogator:
         clip.eval()
         clip_processor = CLIPProcessor.from_pretrained(clip_model)
         vocab = preprocess_vocabulary(clip, clip_processor, batch_size, device)
-        return cls(clip, clip_processor, vocab)
+        return cls(clip, clip_processor, vocab, device, torch_dtype)
