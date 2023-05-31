@@ -68,12 +68,12 @@ class PromptEngineer:
         Args:
             path (str): path.
         """
-        blip = BLIP(
+        blip = BLIP.load_model(
             blip_model=blip_model,
             device=device,
             torch_dtype=torch_dtype
         )
-        clip_interrogator = CLIPInterrogator(
+        clip_interrogator = CLIPInterrogator.load_model(
             clip_model=clip_model,
             device=device,
             torch_dtype=torch_dtype
