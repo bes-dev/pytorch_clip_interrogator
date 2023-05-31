@@ -21,6 +21,7 @@ except:
 # utils
 import PIL
 from PIL import Image
+import json
 
 
 class BLIP:
@@ -33,7 +34,8 @@ class BLIP:
     """
     def __init__(
             self,
-            blip_model: str = "Salesforce/blip-image-captioning-large",
+            blip,
+            blip_processor,
             device: str = "cpu",
             torch_dtype: torch.dtype = torch.float32
     ):
@@ -41,15 +43,9 @@ class BLIP:
         # params
         self.device = device
         self.torch_dtype = torch_dtype
-        # BLIP model
-        print(f"load BLIP model: {blip_model}...")
-        if "blip2" in blip_model:
-            self.blip_processor = Blip2Processor.from_pretrained(blip_model)
-            self.blip = Blip2ForConditionalGeneration.from_pretrained(blip_model, torch_dtype=torch_dtype).to(device)
-        else:
-            self.blip_processor = BlipProcessor.from_pretrained(blip_model)
-            self.blip = BlipForConditionalGeneration.from_pretrained(blip_model, torch_dtype=torch_dtype).to(device)
-        self.blip.eval()
+        # model
+        self.blip = blip
+        self.blip_processor = blip_processor
 
     @torch.inference_mode()
     def __call__(
@@ -85,3 +81,61 @@ class BLIP:
             else:
                 pixel_values = _pixel_values
         return pixel_values.to(device=self.device, dtype=self.torch_dtype)
+
+    @classmethod
+    def load_model(
+            cls,
+            blip_model: str = "Salesforce/blip-image-captioning-large",
+            device: str = "cpu",
+            torch_dtype: torch.dtype = torch.float32
+    ):
+        """ Load pretrained BLIP model.
+
+        Args:
+            blip_model (str): BLIP model name.
+            device (str): target device.
+            torch_dtype (torch.dtype): target type.
+        """
+        print(f"load BLIP model: {blip_model}...")
+        if "blip2" in blip_model:
+            blip = Blip2ForConditionalGeneration.from_pretrained(blip_model, torch_dtype=torch_dtype).to(device)
+            blip_processor = Blip2Processor.from_pretrained(blip_model)
+        else:
+            blip = BlipForConditionalGeneration.from_pretrained(blip_model, torch_dtype=torch_dtype).to(device)
+            blip_processor = BlipProcessor.from_pretrained(blip_model)
+        blip.eval()
+        return cls(blip, blip_processor, device, torch_dtype)
+
+    def save_pretrained(self, path: str) -> None:
+        """ Save pretrained interrogator to disk.
+
+        Args:
+            path (str): path.
+        """
+        if not os.path.exists(path):
+            os.makedirs(path)
+        self.blip.save_pretrained(os.path.join(path, "blip"))
+        self.blip_processor.save_pretrained(os.path.join(path, "blip_processor"))
+
+    @classmethod
+    def from_pretrained(
+            cls,
+            path: str,
+            torch_dtype: torch.dtype = torch.float32,
+            device: str = "cpu"
+    ):
+        """ Load pretrained interrogator from disk.
+
+        Args:
+            path (str): path.
+        """
+        with open(os.path.join(path, "blip", "config.json")) as f:
+            cfg = json.load(f)
+            if "blip2" in cfg["architectures"][0].lower():
+                blip = Blip2ForConditionalGeneration.from_pretrained(os.path.join(path, "blip"), torch_dtype=torch_dtype).to(device)
+                blip_processor = Blip2Processor.from_pretrained(os.path.join(path, "blip_processor"))
+            else:
+                blip = BlipForConditionalGeneration.from_pretrained(os.path.join(path, "blip"), torch_dtype=torch_dtype).to(device)
+                blip_processor = BlipProcessor.from_pretrained(os.path.join(path, "blip_processor"))
+            blip.eval()
+        return cls(blip, blip_processor, device, torch_dtype)

@@ -27,23 +27,9 @@ class PromptEngineer:
         device (str): target device.
         torch_dtype (torch.dtype): target type.
     """
-    def __init__(
-            self,
-            blip_model: str = "Salesforce/blip-image-captioning-large",
-            clip_model: str = "openai/clip-vit-base-patch32",
-            device: str = "cpu",
-            torch_dtype: torch.dtype = torch.float32
-    ):
-        self.blip = BLIP(
-            blip_model=blip_model,
-            device=device,
-            torch_dtype=torch_dtype
-        )
-        self.clip_interrogator = CLIPInterrogator(
-            clip_model=clip_model,
-            device=device,
-            torch_dtype=torch_dtype
-        )
+    def __init__(self, blip, clip_interrogator):
+        self.blip = blip
+        self.clip_interrogator = clip_interrogator
 
     def __call__(
             self,
@@ -68,3 +54,63 @@ class PromptEngineer:
                 max_flavors=max_flavors
             )
         return caption
+
+    @classmethod
+    def load_model(
+            cls,
+            blip_model: str = "Salesforce/blip-image-captioning-large",
+            clip_model: str = "openai/clip-vit-base-patch32",
+            device: str = "cpu",
+            torch_dtype: torch.dtype = torch.float32
+    ):
+        """ Load pretrained prompt engineer.
+
+        Args:
+            path (str): path.
+        """
+        blip = BLIP(
+            blip_model=blip_model,
+            device=device,
+            torch_dtype=torch_dtype
+        )
+        clip_interrogator = CLIPInterrogator(
+            clip_model=clip_model,
+            device=device,
+            torch_dtype=torch_dtype
+        )
+        return cls(blip, clip_interrogator)
+
+    def save_pretrained(self, path: str) -> None:
+        """ Save pretrained prompt engineer to disk.
+
+        Args:
+            path (str): path.
+        """
+        if not os.path.exists(path):
+            os.makedirs(path)
+        self.blip.save_pretrained(os.path.join(path, "blip"))
+        self.clip_interrogator.save_pretrained(os.path.join(path, "clip_interrogator"))
+
+    @classmethod
+    def from_pretrained(
+            cls,
+            path: str,
+            torch_dtype: torch.dtype = torch.float32,
+            device: str = "cpu"
+    ):
+        """ Load pretrained prompt engineer from disk.
+
+        Args:
+            path (str): path.
+        """
+        blip = BLIP.from_pretrained(
+            os.path.join(path, "blip"),
+            torch_dtype=torch_dtype,
+            device=device
+        )
+        clip_interrogator = CLIPInterrogator.from_pretrained(
+            os.path.join(path, "clip_interrogator"),
+            torch_dtype=torch_dtype,
+            device=device
+        )
+        return cls(blip, clip_interrogator)

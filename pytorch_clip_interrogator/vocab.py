@@ -57,13 +57,27 @@ class Vocab:
             output.append(itemgetter(*ids.tolist()[i])(self.dataset["text"]))
         return output
 
-    def save_pretrained(self, filename: str) -> None:
-        """ Save pretrained index to file.
+    def save_pretrained(self, path: str) -> None:
+        """ Save pretrained vocab to disk.
 
         Args:
-            filename (str): output filename.
+            path (str): path to store vocab.
         """
-        faiss.write_index(self.index, filename)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        faiss.write_index(self.index, os.path.join(path, "vocab.index"))
+        self.dataset.to_csv(os.path.join(path, "vocab.dataset"))
+
+    @classmethod
+    def from_pretrained(cls, path: str):
+        """ Load pretrained vocab from disk.
+
+        Args:
+            path (str): vocab path.
+        """
+        index = faiss.read_index(os.path.join(path, "vocab.index"))
+        dataset = datasets.arrow_dataset.Dataset.from_csv(os.path.join(path, "vocab.dataset"))
+        return cls(dataset, index)
 
     @classmethod
     def from_corpus(

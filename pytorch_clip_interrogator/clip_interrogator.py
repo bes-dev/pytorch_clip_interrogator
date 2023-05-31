@@ -35,20 +35,13 @@ class CLIPInterrogator:
     """
     def __init__(
             self,
-            clip_model: str = "openai/clip-vit-base-patch32",
-            device: str = "cpu",
-            torch_dtype: torch.dtype = torch.float32
+            clip: CLIPModel,
+            clip_processor: CLIPProcessor,
+            vocab: Vocab
     ):
-        # params
-        self.device = device
-        self.torch_dtype = torch_dtype
-        # CLIP model
-        print(f"load CLIP model: {clip_model}...")
-        self.clip_processor = CLIPProcessor.from_pretrained(clip_model)
-        self.clip = CLIPModel.from_pretrained(clip_model, torch_dtype=torch_dtype).to(device)
-        self.clip.eval()
-        # initialize corpus
-        self.vocab = self._build_vocabulary()
+        self.clip = clip
+        self.clip_processor = clip_processor
+        self.vocab = vocab
 
     def __call__(
             self,
@@ -84,25 +77,6 @@ class CLIPInterrogator:
 
         return output
 
-    def _build_vocabulary(self, batch_size: int = 64) -> addict:
-        """ Build prompt vocabulary.
-
-        Args:
-            batch_size (int): batch size.
-        Returns:
-            addict vocabulary.
-        """
-        vocab = {}
-        for name in ["artists", "flavors", "mediums", "movements", "sites"]:
-            vocab[name] = Vocab.from_corpus(
-                os.path.join(res_path("data"), f"{name}.txt"),
-                self.clip,
-                self.clip_processor,
-                batch_size,
-                self.device
-            )
-        return addict(vocab)
-
     @torch.inference_mode()
     def _image_to_features(
             self,
@@ -121,3 +95,58 @@ class CLIPInterrogator:
         image_features = self.clip.get_image_features(**to_device(inputs, self.device, dtype=self.torch_dtype))
         image_features = F.normalize(image_features, p=2, dim=1).float()
         return image_features.cpu().numpy()
+
+    def save_pretrained(self, path: str) -> None:
+        """ Save pretrained interrogator to disk.
+
+        Args:
+            path (str): path.
+        """
+        if not os.path.exists(path):
+            os.makedirs(path)
+        for key, val in self.vocab.items():
+            val.save_pretrained(os.path.join(path, key))
+        self.clip_processor.save_pretrained(os.path.join(path, "clip_processor"))
+        self.clip.save_pretrained(os.path.join(path, "clip"))
+
+    @classmethod
+    def from_pretrained(
+            cls,
+            path: str,
+            torch_dtype: torch.dtype = torch.float32,
+            device: str = "cpu"
+    ):
+        """ Load pretrained interrogator from disk.
+
+        Args:
+            path (str): path.
+        """
+        vocab = {}
+        for name in ["artists", "flavors", "mediums", "movements", "sites"]:
+            vocab[name] = Vocab.from_pretrained(
+                os.path.join(path, name)
+            )
+        vocab = addict(vocab)
+        clip_processor = CLIPProcessor.from_pretrained(os.path.join(path, "clip_processor"))
+        clip = CLIPModel.from_pretrained(os.path.join(path, "clip"), torch_dtype=torch_dtype).to(device)
+        clip.eval()
+        return cls(clip, clip_processor, vocab)
+
+    @classmethod
+    def load_model(
+            cls,
+            clip_model: str = "openai/clip-vit-base-patch32",
+            device: str = "cpu",
+            torch_dtype: torch.dtype = torch.float32,
+            batch_size: int = 64
+    ):
+        """ Load pretrained interrogator from disk.
+
+        Args:
+            path (str): path.
+        """
+        clip = CLIPModel.from_pretrained(clip_model, torch_dtype=torch_dtype).to(device)
+        clip.eval()
+        clip_processor = CLIPProcessor.from_pretrained(clip_model)
+        vocab = preprocess_vocabulary(clip, clip_processor, batch_size, device)
+        return cls(clip, clip_processor, vocab)
