@@ -117,13 +117,13 @@ def preprocess_vocabulary(
         Returns:
             addict vocabulary.
         """
-        vocab = {}
-        for name in ["artists", "flavors", "mediums", "movements", "sites"]:
-            vocab[name] = Vocab.from_corpus(
-                os.path.join(res_path("data"), f"{name}.txt"),
-                clip,
-                clip_processor,
-                batch_size,
-                device
-            )
-        return addict(vocab)
+    vocab = {}
+    for name in ["artists", "flavors", "mediums", "movements", "sites"]:
+        vocab[name] = Vocab.from_corpus(
+            os.path.join(res_path("data"), f"{name}.txt"),
+            clip,
+            clip_processor,
+            batch_size,
+            device
+        )
+    return addict(vocab)
